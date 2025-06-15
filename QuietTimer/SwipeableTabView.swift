@@ -13,6 +13,9 @@ struct SwipeableTabView: View {
                 
                 SavedTimersView()
                     .tag(1)
+                
+                SettingsView()
+                    .tag(2)
             }
             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -38,6 +41,17 @@ struct SwipeableTabView: View {
                             .font(.caption)
                     }
                     .foregroundColor(selectedTab == 1 ? .white : .gray)
+                }
+                .frame(maxWidth: .infinity)
+                
+                Button(action: { selectedTab = 2 }) {
+                    VStack(spacing: 4) {
+                        Image(systemName: "gearshape")
+                            .font(.system(size: 20))
+                        Text("Settings")
+                            .font(.caption)
+                    }
+                    .foregroundColor(selectedTab == 2 ? .white : .gray)
                 }
                 .frame(maxWidth: .infinity)
             }

@@ -239,8 +239,11 @@ struct TimerView: View {
     }
     
     private func startAudio() {
-        guard let soundURL = Bundle.main.url(forResource: "timer_sound", withExtension: "mp3") else {
-            print("Could not find timer_sound.mp3 in bundle")
+        // Check if audio file is selected
+        guard let fileName = timerStorage.selectedAudioOption.fileName else { return }
+        
+        guard let soundURL = Bundle.main.url(forResource: fileName, withExtension: "mp3") else {
+            print("Could not find \(fileName).mp3 in bundle")
             return
         }
         

@@ -16,6 +16,12 @@ struct MainTabView: View {
                     Image(systemName: "list.bullet.clipboard")
                     Text("History")
                 }
+            
+            SettingsView()
+                .tabItem {
+                    Image(systemName: "gearshape")
+                    Text("Settings")
+                }
         }
         .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
         .accentColor(.white)
