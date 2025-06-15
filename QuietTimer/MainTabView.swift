@@ -5,13 +5,13 @@ struct MainTabView: View {
     
     var body: some View {
         TabView {
-            TimerView(timerStorage: timerStorage)
+            TimerView()
                 .tabItem {
                     Image(systemName: "timer")
                     Text("Timer")
                 }
             
-            SavedTimersView(timerStorage: timerStorage)
+            SavedTimersView()
                 .tabItem {
                     Image(systemName: "list.bullet.clipboard")
                     Text("History")
@@ -19,6 +19,7 @@ struct MainTabView: View {
         }
         .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
         .accentColor(.white)
+        .environmentObject(timerStorage)
     }
 }
 

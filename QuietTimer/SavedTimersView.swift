@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct SavedTimersView: View {
-    @ObservedObject var timerStorage: TimerStorage
+    @EnvironmentObject var timerStorage: TimerStorage
     
     private var groupedSessions: [Date: [TimerSession]] {
         Dictionary(grouping: timerStorage.sessions) { session in
@@ -76,7 +76,8 @@ struct SavedTimersView: View {
     private func formatDurationHoursMinutes(_ duration: TimeInterval) -> String {
         let hours = Int(duration) / 3600
         let minutes = Int(duration) % 3600 / 60
-        return String(format: "%02d:%02d", hours, minutes)
+        let seconds = Int(duration) % 60
+        return String(format: "%02d:%02d:%02d", hours, minutes, seconds)
     }
     
     private func formatDateHeader(_ date: Date) -> String {
@@ -87,5 +88,6 @@ struct SavedTimersView: View {
 }
 
 #Preview {
-    SavedTimersView(timerStorage: TimerStorage())
+    SavedTimersView()
+        .environmentObject(TimerStorage())
 } 

@@ -1,17 +1,17 @@
 import SwiftUI
 
 struct SwipeableTabView: View {
-    @StateObject private var timerStorage = TimerStorage()
+    @EnvironmentObject var timerStorage: TimerStorage
     @State private var selectedTab = 0
     
     var body: some View {
         VStack(spacing: 0) {
             // Content area with swipe gesture
             TabView(selection: $selectedTab) {
-                TimerView(timerStorage: timerStorage)
+                TimerView()
                     .tag(0)
                 
-                SavedTimersView(timerStorage: timerStorage)
+                SavedTimersView()
                     .tag(1)
             }
             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
@@ -21,7 +21,7 @@ struct SwipeableTabView: View {
             HStack {
                 Button(action: { selectedTab = 0 }) {
                     VStack(spacing: 4) {
-                        Image(systemName: "timer")
+                        Image(systemName: "clock")
                             .font(.system(size: 20))
                         Text("Timer")
                             .font(.caption)
@@ -32,7 +32,7 @@ struct SwipeableTabView: View {
                 
                 Button(action: { selectedTab = 1 }) {
                     VStack(spacing: 4) {
-                        Image(systemName: "list.bullet.clipboard")
+                        Image(systemName: "list.number")
                             .font(.system(size: 20))
                         Text("History")
                             .font(.caption)
@@ -42,6 +42,7 @@ struct SwipeableTabView: View {
                 .frame(maxWidth: .infinity)
             }
             .padding(.vertical, 8)
+            .padding(.bottom, 20)
             .background(Color.black)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -52,4 +53,5 @@ struct SwipeableTabView: View {
 
 #Preview {
     SwipeableTabView()
+        .environmentObject(TimerStorage())
 } 
