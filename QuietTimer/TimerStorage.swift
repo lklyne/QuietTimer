@@ -88,6 +88,7 @@ class TimerStorage: ObservableObject {
             saveFadeoutSetting()
         }
     }
+    @Published var isSaveAnimationActive: Bool = false
     
     init() {
         loadSessions()
@@ -98,6 +99,13 @@ class TimerStorage: ObservableObject {
     func saveSession(_ session: TimerSession) {
         sessions.append(session)
         saveSessions()
+    }
+    
+    func updateSession(_ updatedSession: TimerSession) {
+        if let index = sessions.firstIndex(where: { $0.id == updatedSession.id }) {
+            sessions[index] = updatedSession
+            saveSessions()
+        }
     }
     
     func deleteSession(at index: Int) {

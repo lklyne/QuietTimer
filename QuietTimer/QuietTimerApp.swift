@@ -20,6 +20,8 @@ struct QuietTimerApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(timerStorage)
+                .background(Color.black)
+                .preferredColorScheme(.dark)
                 .onReceive(NotificationCenter.default.publisher(for: UIApplication.willResignActiveNotification)) { _ in
                     // App is going to background
                     handleAppGoingToBackground()

@@ -2,13 +2,20 @@ import Foundation
 
 struct TimerSession: Codable, Identifiable {
     let id = UUID()
-    let startTime: Date
-    let endTime: Date
-    let duration: TimeInterval
+    var startTime: Date
+    var endTime: Date
+    var duration: TimeInterval
+    var description: String
     
-    init(startTime: Date, endTime: Date) {
+    init(startTime: Date, endTime: Date, description: String = "") {
         self.startTime = startTime
         self.endTime = endTime
+        self.duration = endTime.timeIntervalSince(startTime)
+        self.description = description
+    }
+    
+    // Helper method to update duration when times change
+    mutating func updateDuration() {
         self.duration = endTime.timeIntervalSince(startTime)
     }
     

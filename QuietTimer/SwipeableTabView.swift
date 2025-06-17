@@ -23,9 +23,10 @@ struct SwipeableTabView: View {
             // Custom tab bar
             HStack {
                 Button(action: { selectedTab = 0 }) {
-                    VStack(spacing: 4) {
-                        Image(systemName: "clock")
-                            .font(.system(size: 20))
+                    VStack(spacing: 8) {
+                        Image("clock")
+                            .renderingMode(.template)
+                            .frame(width: 20, height: 20)
                         Text("Timer")
                             .font(.caption)
                     }
@@ -34,9 +35,10 @@ struct SwipeableTabView: View {
                 .frame(maxWidth: .infinity)
                 
                 Button(action: { selectedTab = 1 }) {
-                    VStack(spacing: 4) {
-                        Image(systemName: "list.number")
-                            .font(.system(size: 20))
+                    VStack(spacing: 8) {
+                        Image(timerStorage.isSaveAnimationActive ? "folder-open" : "folder")
+                            .renderingMode(.template)
+                            .frame(width: 20, height: 20)
                         Text("History")
                             .font(.caption)
                     }
@@ -45,9 +47,10 @@ struct SwipeableTabView: View {
                 .frame(maxWidth: .infinity)
                 
                 Button(action: { selectedTab = 2 }) {
-                    VStack(spacing: 4) {
-                        Image(systemName: "gearshape")
-                            .font(.system(size: 20))
+                    VStack(spacing: 8) {
+                        Image("cog")
+                            .renderingMode(.template)
+                            .frame(width: 20, height: 20)
                         Text("Settings")
                             .font(.caption)
                     }

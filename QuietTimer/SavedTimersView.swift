@@ -2,11 +2,22 @@ import SwiftUI
 
 struct SavedTimersView: View {
     @EnvironmentObject var timerStorage: TimerStorage
+    @State private var showingEditTimer = false
+    @State private var selectedSession: TimerSession?
     
-    private var groupedSessions: [Date: [TimerSession]] {
-        Dictionary(grouping: timerStorage.sessions) { session in
+    private var groupedSessions: [Date: [String: [TimerSession]]] {
+        // First group by date, then by description
+        let sessionsByDate = Dictionary(grouping: timerStorage.sessions) { session in
             Calendar.current.startOfDay(for: session.startTime)
         }
+        
+        var result: [Date: [String: [TimerSession]]] = [:]
+        for (date, sessions) in sessionsByDate {
+            result[date] = Dictionary(grouping: sessions) { session in
+                session.description.isEmpty ? "No Description" : session.description
+            }
+        }
+        return result
     }
     
     var body: some View {
@@ -26,36 +37,56 @@ struct SavedTimersView: View {
                     ScrollView {
                         LazyVStack(alignment: .leading, spacing: 36) {
                             ForEach(groupedSessions.keys.sorted(by: >), id: \.self) { date in
-                                VStack(alignment: .leading, spacing: 12) {
+                                VStack(alignment: .leading, spacing: 20) {
+                                    // Date header
                                     Text(formatDateHeader(date))
                                         .font(.system(size: 16, weight: .medium, design: .monospaced))
                                         .foregroundColor(.white)
                                         .opacity(0.5)
                                         .padding(.horizontal, 20)
                                     
-                                    ForEach(groupedSessions[date] ?? []) { session in
-                                        HStack {
-                                            HStack(spacing: 8) {
-                                                Text(formatTime(session.startTime))
+                                    // Description groups within this date
+                                    ForEach((groupedSessions[date] ?? [:]).keys.sorted(), id: \.self) { description in
+                                        VStack(alignment: .leading, spacing: 12) {
+                                            // Description header (only show if not "No Description")
+                                            if description != "No Description" {
+                                                Text(description)
                                                     .font(.system(size: 16, weight: .medium, design: .monospaced))
                                                     .foregroundColor(.white)
-                                                
-                                                Text("→")
-                                                    .font(.system(size: 16, weight: .medium, design: .monospaced))
-                                                    .foregroundColor(.white)
-                                                
-                                                Text(formatTime(session.endTime))
-                                                    .font(.system(size: 16, weight: .medium, design: .monospaced))
-                                                    .foregroundColor(.white)
+                                                    .opacity(0.5)
+                                                    .padding(.horizontal, 20)
                                             }
                                             
-                                            Spacer()
-                                            
-                                            Text(formatDurationHoursMinutes(session.duration))
-                                                .font(.system(size: 16, weight: .medium, design: .monospaced))
-                                                .foregroundColor(.white)
+                                            ForEach(groupedSessions[date]?[description] ?? []) { session in
+                                                HStack {
+                                                    HStack(spacing: 8) {
+                                                        Text(formatTime(session.startTime))
+                                                            .font(.system(size: 16, weight: .medium, design: .monospaced))
+                                                            .foregroundColor(.white)
+                                                        
+                                                        Text("→")
+                                                            .font(.system(size: 16, weight: .medium, design: .monospaced))
+                                                            .foregroundColor(.white)
+                                                        
+                                                        Text(formatTime(session.endTime))
+                                                            .font(.system(size: 16, weight: .medium, design: .monospaced))
+                                                            .foregroundColor(.white)
+                                                    }
+                                                    
+                                                    Spacer()
+                                                    
+                                                    Text(formatDurationHoursMinutes(session.duration))
+                                                        .font(.system(size: 16, weight: .medium, design: .monospaced))
+                                                        .foregroundColor(.white)
+                                                }
+                                                .padding(.horizontal, 20)
+                                                .contentShape(Rectangle())
+                                                .onTapGesture {
+                                                    selectedSession = session
+                                                    showingEditTimer = true
+                                                }
+                                            }
                                         }
-                                        .padding(.horizontal, 20)
                                     }
                                 }
                             }
@@ -63,6 +94,14 @@ struct SavedTimersView: View {
                         .padding(.top, 20)
                     }
                 }
+            }
+            
+
+        }
+        .sheet(isPresented: $showingEditTimer) {
+            if let session = selectedSession {
+                EditTimerBottomSheetView(session: session, isPresented: $showingEditTimer)
+                    .environmentObject(timerStorage)
             }
         }
     }

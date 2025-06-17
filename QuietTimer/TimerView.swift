@@ -23,7 +23,14 @@ struct TimerView: View {
     @State private var savedTime: TimeInterval = 0
     @State private var showSavedTimer = false
     @State private var savedTimerAnimated = false
+    @State private var savedTimerPhase: AnimationPhase = .initial
     @State private var showNewTimer = false
+    
+    enum AnimationPhase {
+        case initial
+        case windupUp
+        case springDown
+    }
     
     var body: some View {
         GeometryReader { geometry in
@@ -51,12 +58,33 @@ struct TimerView: View {
                         .foregroundColor(.white)
                         .font(.system(size: 24, weight: .medium, design: .monospaced))
                         .offset(
-                            x: savedTimerAnimated ? (geometry.size.width * 0.8) : 0,
-                            y: savedTimerAnimated ? (geometry.size.height * 1.1) : 0
+                            y: {
+                                switch savedTimerPhase {
+                                case .initial:
+                                    return 0
+                                case .windupUp:
+                                    return -geometry.size.height * 0.02 // Move up slightly
+                                case .springDown:
+                                    return geometry.size.height * 1.75 // Spring down
+                                }
+                            }()
                         )
-                        .scaleEffect(savedTimerAnimated ? 0.4 : 1.0)
-                        .opacity(savedTimerAnimated ? 0.0 : 1.0)
-
+                        .scaleEffect({
+                            switch savedTimerPhase {
+                            case .initial, .windupUp:
+                                return 1.0
+                            case .springDown:
+                                return 0.1
+                            }
+                        }())
+                        .opacity({
+                            switch savedTimerPhase {
+                            case .initial, .windupUp:
+                                return 1.02
+                            case .springDown:
+                                return 0.0
+                            }
+                        }())
                 }
                 
                 // New timer animating in
@@ -77,29 +105,33 @@ struct TimerView: View {
                         Spacer()
                         
                         HStack(spacing: 24) {
-                            Button("RESET") {
+                            Button(action: {
                                 resetTimer()
+                            }) {
+                                Text("RESET")
+                                    .foregroundColor(.white)
+                                    .font(.system(size: 16, weight: .medium, design: .monospaced))
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 16)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 2)
+                                            .fill(Color.gray.opacity(0.2))
+                                    )
                             }
-                            .foregroundColor(.white)
-                            .font(.system(size: 16, weight: .medium, design: .monospaced))
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(
-                                RoundedRectangle(cornerRadius: 2)
-                                    .fill(Color.gray.opacity(0.2))
-                            )
                             
-                            Button("SAVE") {
+                            Button(action: {
                                 saveCurrentSession()
+                            }) {
+                                Text("SAVE")
+                                    .foregroundColor(.black)
+                                    .font(.system(size: 16, weight: .medium, design: .monospaced))
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 16)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 2)
+                                            .fill(Color.white.opacity(0.9))
+                                    )
                             }
-                            .foregroundColor(.white)
-                            .font(.system(size: 16, weight: .medium, design: .monospaced))
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(
-                                RoundedRectangle(cornerRadius: 2)
-                                    .fill(Color.gray.opacity(0.2))
-                            )
                         }
                         .padding(.horizontal, 24)
                         .padding(.bottom, 40)
@@ -177,7 +209,7 @@ struct TimerView: View {
         isAnimating = false
         showSavedTimer = false
         showNewTimer = false
-        savedTimerAnimated = false
+        savedTimerPhase = .initial
         savedTime = 0
     }
     
@@ -200,30 +232,43 @@ struct TimerView: View {
         
         isAnimating = true
         savedTime = timeElapsed
+        timerStorage.isSaveAnimationActive = true
         
         // Step 1: Show saved timer at center
-        withAnimation(.easeInOut(duration: 0.2)) {
+        withAnimation(.easeInOut(duration: 0.13)) {
             showSavedTimer = true
         }
-        savedTimerAnimated = false
+        savedTimerPhase = .initial
         
-        // Step 2: Main animation toward bottom-right (spring from windup position)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            withAnimation(.spring(response: 1.2, dampingFraction: 0.4)) {
-                savedTimerAnimated = true
+        // Step 2: First move up slightly (windup)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            withAnimation(.easeOut(duration: 0.15)) {
+                savedTimerPhase = .windupUp
             }
+            
+            // Step 3: Then spring down (main animation)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                withAnimation(.smooth(duration: 0.4)) {
+                    savedTimerPhase = .springDown
+                }
+            }
+        }
+        
+        // Close folder icon early (adjust timing as needed)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
+            timerStorage.isSaveAnimationActive = false
         }
         
         // Step 3: Hide saved timer after animation completes
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
             withAnimation(.easeInOut(duration: 0.2)) {
                 showSavedTimer = false
             }
-            savedTimerAnimated = false
+            savedTimerPhase = .initial
             
             // Save session and reset timer state
             let endTime = Date()
-            let session = TimerSession(startTime: startTime, endTime: endTime)
+            let session = TimerSession(startTime: startTime, endTime: endTime, description: "")
             timerStorage.saveSession(session)
             
             // Reset timer state
@@ -245,6 +290,7 @@ struct TimerView: View {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
                 showNewTimer = false
                 isAnimating = false
+                // Note: folder icon already closed earlier
             }
         }
     }
