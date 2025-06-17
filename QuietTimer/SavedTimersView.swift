@@ -2,7 +2,6 @@ import SwiftUI
 
 struct SavedTimersView: View {
     @EnvironmentObject var timerStorage: TimerStorage
-    @State private var showingEditTimer = false
     @State private var selectedSession: TimerSession?
     
     private var groupedSessions: [Date: [String: [TimerSession]]] {
@@ -83,7 +82,6 @@ struct SavedTimersView: View {
                                                 .contentShape(Rectangle())
                                                 .onTapGesture {
                                                     selectedSession = session
-                                                    showingEditTimer = true
                                                 }
                                             }
                                         }
@@ -98,11 +96,12 @@ struct SavedTimersView: View {
             
 
         }
-        .sheet(isPresented: $showingEditTimer) {
-            if let session = selectedSession {
-                EditTimerBottomSheetView(session: session, isPresented: $showingEditTimer)
-                    .environmentObject(timerStorage)
-            }
+        .sheet(item: $selectedSession) { session in
+            EditTimerBottomSheetView(session: session, isPresented: Binding(
+                get: { selectedSession != nil },
+                set: { if !$0 { selectedSession = nil } }
+            ))
+            .environmentObject(timerStorage)
         }
     }
     
