@@ -114,6 +114,13 @@ class TimerStorage: ObservableObject {
         saveSessions()
     }
     
+    func deleteSession(_ session: TimerSession) {
+        if let index = sessions.firstIndex(where: { $0.id == session.id }) {
+            sessions.remove(at: index)
+            saveSessions()
+        }
+    }
+    
     func clearAllSessions() {
         sessions.removeAll()
         saveSessions()

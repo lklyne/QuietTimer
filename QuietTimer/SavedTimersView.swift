@@ -27,9 +27,10 @@ struct SavedTimersView: View {
             VStack(spacing: 0) {
                 if timerStorage.sessions.isEmpty {
                     VStack(spacing: 20) {
-                        Text("No saved timers yet")
-                            .font(.system(size: 18, weight: .medium, design: .monospaced))
+                        Text("No saved timers")
+                            .font(.system(size: 16, weight: .medium, design: .monospaced))
                             .foregroundColor(.white)
+                            .opacity(0.5)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
@@ -37,23 +38,41 @@ struct SavedTimersView: View {
                         LazyVStack(alignment: .leading, spacing: 36) {
                             ForEach(groupedSessions.keys.sorted(by: >), id: \.self) { date in
                                 VStack(alignment: .leading, spacing: 20) {
-                                    // Date header
-                                    Text(formatDateHeader(date))
-                                        .font(.system(size: 16, weight: .medium, design: .monospaced))
-                                        .foregroundColor(.white)
-                                        .opacity(0.5)
-                                        .padding(.horizontal, 20)
+                                    // Date header - only show for "No Description" timers
+                                    if (groupedSessions[date] ?? [:]).keys.contains("No Description") {
+                                        Text(formatDateHeader(date))
+                                            .font(.system(size: 16, weight: .medium, design: .monospaced))
+                                            .foregroundColor(.white)
+                                            .opacity(0.5)
+                                            .padding(.horizontal, 20)
+                                    }
                                     
                                     // Description groups within this date
-                                    ForEach((groupedSessions[date] ?? [:]).keys.sorted(), id: \.self) { description in
+                                    ForEach((groupedSessions[date] ?? [:]).keys.sorted { lhs, rhs in
+                                        // Sort "No Description" first, then alphabetically
+                                        if lhs == "No Description" { return true }
+                                        if rhs == "No Description" { return false }
+                                        return lhs < rhs
+                                    }, id: \.self) { description in
                                         VStack(alignment: .leading, spacing: 12) {
-                                            // Description header (only show if not "No Description")
+                                            // Description header - show date + description on same line (except for "No Description")
                                             if description != "No Description" {
-                                                Text(description)
-                                                    .font(.system(size: 16, weight: .medium, design: .monospaced))
-                                                    .foregroundColor(.white)
-                                                    .opacity(0.5)
-                                                    .padding(.horizontal, 20)
+                                                HStack {
+                                                    Text(formatDateHeader(date))
+                                                        .font(.system(size: 16, weight: .medium, design: .monospaced))
+                                                        .foregroundColor(.white)
+                                                        .opacity(0.5)
+                                                    
+                                                    Spacer()
+                                                    
+                                                    Text(description)
+                                                        .font(.system(size: 16, weight: .medium, design: .monospaced))
+                                                        .foregroundColor(.white)
+                                                        .opacity(0.5)
+                                                        .lineLimit(1)
+                                                        .truncationMode(.tail)
+                                                }
+                                                .padding(.horizontal, 20)
                                             }
                                             
                                             ForEach(groupedSessions[date]?[description] ?? []) { session in

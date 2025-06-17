@@ -16,6 +16,7 @@ struct TimerView: View {
     @State private var sessionStartTime: Date?
     @State private var timerStartTime: Date? // Track when timer actually started
     @State private var fadeoutTimer: Timer?
+    @State private var orientation = UIDeviceOrientation.unknown
     @EnvironmentObject var timerStorage: TimerStorage
     
     // Animation states
@@ -30,6 +31,14 @@ struct TimerView: View {
         case initial
         case windupUp
         case springDown
+    }
+    
+    var isLandscape: Bool {
+        orientation.isLandscape
+    }
+    
+    var timerFontSize: CGFloat {
+        isLandscape ? 48 : 24
     }
     
     var body: some View {
@@ -47,16 +56,17 @@ struct TimerView: View {
                 // Current timer (hidden during save animation)
                 Text(formatTime(timeElapsed))
                     .foregroundColor(isRunning ? .gray : .white)
-                    .font(.system(size: isRunning ? 24 : 24, weight: .medium, design: .monospaced))
+                    .font(.system(size: timerFontSize, weight: .medium, design: .monospaced))
                     .contentTransition(.numericText())
                     .opacity(showSavedTimer ? 0 : 1)
-                    .animation(.spring(response: 0.5, dampingFraction: 0.7), value: isRunning)
+                    // .animation(.spring(response: 0.5, dampingFraction: 0.7), value: isRunning)
+                    .animation(.easeInOut(duration: 0.3), value: timerFontSize)
                 
                 // Saved timer animating out
                 if showSavedTimer {
                     Text(formatTime(savedTime))
                         .foregroundColor(.white)
-                        .font(.system(size: 24, weight: .medium, design: .monospaced))
+                        .font(.system(size: timerFontSize, weight: .medium, design: .monospaced))
                         .offset(
                             y: {
                                 switch savedTimerPhase {
@@ -91,7 +101,7 @@ struct TimerView: View {
                 if showNewTimer {
                     Text("00:00:00")
                         .foregroundColor(.white)
-                        .font(.system(size: 24, weight: .medium, design: .monospaced))
+                        .font(.system(size: timerFontSize, weight: .medium, design: .monospaced))
                         .transition(
                             .scale(scale: 0.8)
                             .combined(with: .opacity)
@@ -134,9 +144,18 @@ struct TimerView: View {
                             }
                         }
                         .padding(.horizontal, 24)
-                        .padding(.bottom, 40)
+                        .padding(.bottom, isLandscape ? 20 : 40)
                     }
                 }
+            }
+        }
+        .onAppear {
+            // Set initial orientation
+            orientation = UIDevice.current.orientation
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
+            withAnimation(.easeInOut(duration: 0.3)) {
+                orientation = UIDevice.current.orientation
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in

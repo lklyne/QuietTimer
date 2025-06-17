@@ -150,8 +150,27 @@ struct EditTimerBottomSheetView: View {
                                 .cornerRadius(8)
                         }
                         
-                        // Recent descriptions - aligned with left edge
-                        if !recentDescriptions.isEmpty {
+                        // Show clear button if there's a description, otherwise show chips
+                        if !description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                            // Clear button when description exists
+                            HStack {
+                                Button("CLEAR") {
+                                    description = ""
+                                }
+                                .font(.system(size: 14, weight: .medium, design: .monospaced))
+                                .foregroundColor(.black)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 2)
+                                        .fill(Color.white.opacity(0.9))
+                                )
+                                
+                                Spacer()
+                            }
+                            .frame(height: 32)
+                        } else if !recentDescriptions.isEmpty {
+                            // Recent descriptions chips when no description
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 8) {
                                     ForEach(recentDescriptions, id: \.self) { desc in
@@ -174,7 +193,26 @@ struct EditTimerBottomSheetView: View {
                 }
                 .padding(.horizontal, 20)
                 
-                Spacer()
+                // Delete button at bottom
+                VStack {
+                    Spacer()
+                    
+                    Button(action: {
+                        deleteSession()
+                    }) {
+                        Text("DELETE")
+                            .foregroundColor(.white)
+                            .font(.system(size: 16, weight: .medium, design: .monospaced))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(
+                                RoundedRectangle(cornerRadius: 2)
+                                    .fill(Color.gray.opacity(0.2))
+                            )
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 40)
+                }
             }
             .background(Color.black)
             .preferredColorScheme(.dark)
@@ -188,6 +226,11 @@ struct EditTimerBottomSheetView: View {
         updatedSession.updateDuration()
         
         timerStorage.updateSession(updatedSession)
+        isPresented = false
+    }
+    
+    private func deleteSession() {
+        timerStorage.deleteSession(session)
         isPresented = false
     }
     
