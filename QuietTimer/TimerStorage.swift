@@ -28,10 +28,54 @@ enum AudioOption: String, CaseIterable, Codable {
     }
 }
 
+enum FadeoutOption: String, CaseIterable, Codable {
+    case none = "none"
+    case twentySeconds = "20s"
+    case fifteenMinutes = "15m"
+    case thirtyMinutes = "30m"
+    case fortyFiveMinutes = "45m"
+    case oneHour = "1h"
+    
+    var displayName: String {
+        switch self {
+        case .none:
+            return "NONE"
+        case .twentySeconds:
+            return "20 SECONDS"
+        case .fifteenMinutes:
+            return "15 MINUTES"
+        case .thirtyMinutes:
+            return "30 MINUTES"
+        case .fortyFiveMinutes:
+            return "45 MINUTES"
+        case .oneHour:
+            return "60 MINUTES"
+        }
+    }
+    
+    var durationInSeconds: TimeInterval {
+        switch self {
+        case .none:
+            return 0
+        case .twentySeconds:
+            return 20
+        case .fifteenMinutes:
+            return 15 * 60
+        case .thirtyMinutes:
+            return 30 * 60
+        case .fortyFiveMinutes:
+            return 45 * 60
+        case .oneHour:
+            return 60 * 60
+        }
+    }
+}
+
 class TimerStorage: ObservableObject {
     private let userDefaults = UserDefaults.standard
     private let storageKey = "SavedTimerSessions"
     private let audioSettingKey = "SelectedAudioOption"
+    private let fadeoutSettingKey = "SelectedFadeoutOption"
     
     @Published var sessions: [TimerSession] = []
     @Published var selectedAudioOption: AudioOption = .pinkNoiseShush {
@@ -39,10 +83,16 @@ class TimerStorage: ObservableObject {
             saveAudioSetting()
         }
     }
+    @Published var selectedFadeoutOption: FadeoutOption = .none {
+        didSet {
+            saveFadeoutSetting()
+        }
+    }
     
     init() {
         loadSessions()
         loadAudioSetting()
+        loadFadeoutSetting()
     }
     
     func saveSession(_ session: TimerSession) {
@@ -104,6 +154,29 @@ class TimerStorage: ObservableObject {
         } catch {
             print("Failed to load audio setting: \(error)")
             selectedAudioOption = .pinkNoiseShush
+        }
+    }
+    
+    private func saveFadeoutSetting() {
+        do {
+            let data = try JSONEncoder().encode(selectedFadeoutOption)
+            userDefaults.set(data, forKey: fadeoutSettingKey)
+        } catch {
+            print("Failed to save fadeout setting: \(error)")
+        }
+    }
+    
+    private func loadFadeoutSetting() {
+        guard let data = userDefaults.data(forKey: fadeoutSettingKey) else {
+            selectedFadeoutOption = .none // Default to no fadeout
+            return
+        }
+        
+        do {
+            selectedFadeoutOption = try JSONDecoder().decode(FadeoutOption.self, from: data)
+        } catch {
+            print("Failed to load fadeout setting: \(error)")
+            selectedFadeoutOption = .none
         }
     }
 } 

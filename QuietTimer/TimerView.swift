@@ -15,6 +15,7 @@ struct TimerView: View {
     @State private var audioPlayer: AVAudioPlayer?
     @State private var sessionStartTime: Date?
     @State private var timerStartTime: Date? // Track when timer actually started
+    @State private var fadeoutTimer: Timer?
     @EnvironmentObject var timerStorage: TimerStorage
     
     // Animation states
@@ -116,6 +117,13 @@ struct TimerView: View {
                 startAudio()
             }
         }
+        .onChange(of: timerStorage.selectedFadeoutOption) { _ in
+            // React to fadeout setting changes while timer is running
+            if isRunning {
+                stopFadeoutTimer()
+                startFadeoutTimer()
+            }
+        }
     }
     
     private func toggleTimer() {
@@ -143,6 +151,7 @@ struct TimerView: View {
         }
         
         startAudio()
+        startFadeoutTimer()
     }
     
     private func pauseTimer() {
@@ -151,6 +160,7 @@ struct TimerView: View {
         timer = nil
         // Don't reset timerStartTime - keep it for resume calculation
         stopAudio()
+        stopFadeoutTimer()
     }
     
     private func resetTimer() {
@@ -161,6 +171,7 @@ struct TimerView: View {
         timer?.invalidate()
         timer = nil
         stopAudio()
+        stopFadeoutTimer()
         
         // Reset animation states
         isAnimating = false
@@ -223,6 +234,7 @@ struct TimerView: View {
             timer?.invalidate()
             timer = nil
             stopAudio()
+            stopFadeoutTimer()
             
             // Step 4: Show new timer
             withAnimation {
@@ -272,6 +284,51 @@ struct TimerView: View {
     private func stopAudio() {
         audioPlayer?.stop()
         audioPlayer = nil
+    }
+    
+    private func startFadeoutTimer() {
+        // Only start fadeout if a fadeout option is selected and audio is playing
+        guard timerStorage.selectedFadeoutOption != .none,
+              let audioPlayer = audioPlayer,
+              audioPlayer.isPlaying else { return }
+        
+        let fadeoutDuration = timerStorage.selectedFadeoutOption.durationInSeconds
+        let fadeStartTime = fadeoutDuration / 2 // Start fading at halfway point
+        
+        fadeoutTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
+            updateFadeout(fadeoutDuration: fadeoutDuration, fadeStartTime: fadeStartTime)
+        }
+    }
+    
+    private func stopFadeoutTimer() {
+        fadeoutTimer?.invalidate()
+        fadeoutTimer = nil
+    }
+    
+    private func updateFadeout(fadeoutDuration: TimeInterval, fadeStartTime: TimeInterval) {
+        guard let audioPlayer = audioPlayer else {
+            stopFadeoutTimer()
+            return
+        }
+        
+        // If we've reached the fadeout duration, stop the audio completely
+        if timeElapsed >= fadeoutDuration {
+            audioPlayer.volume = 0
+            stopAudio()
+            stopFadeoutTimer()
+            return
+        }
+        
+        // Start fading at the halfway point
+        if timeElapsed >= fadeStartTime {
+            let fadeProgress = (timeElapsed - fadeStartTime) / (fadeoutDuration - fadeStartTime)
+            // Apply ease-in-out curve: starts slow, speeds up in middle, slows down at end
+            let easedProgress = fadeProgress < 0.5 
+                ? 2 * fadeProgress * fadeProgress 
+                : 1 - pow(-2 * fadeProgress + 2, 3) / 2
+            let volume = max(0, 0.5 * (1 - easedProgress)) // Fade from 0.5 to 0
+            audioPlayer.volume = Float(volume)
+        }
     }
 }
 

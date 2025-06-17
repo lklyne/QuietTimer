@@ -26,6 +26,23 @@ struct SettingsView: View {
                     }
                 }
                 
+                VStack(alignment: .leading, spacing: 20) {
+                    Text("FADEOUT")
+                        .font(.system(size: 16, weight: .medium, design: .monospaced))
+                        .foregroundColor(.white)
+                        .opacity(0.5)
+                    
+                    VStack(alignment: .leading, spacing: 16) {
+                        ForEach(FadeoutOption.allCases, id: \.self) { option in
+                            AudioOptionRow(
+                                title: option.displayName,
+                                isSelected: timerStorage.selectedFadeoutOption == option,
+                                action: { timerStorage.selectedFadeoutOption = option }
+                            )
+                        }
+                    }
+                }
+                
                 Spacer()
             }
             .padding(.horizontal, 20)
