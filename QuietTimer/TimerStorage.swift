@@ -2,12 +2,15 @@ import Foundation
 
 enum AudioOption: String, CaseIterable, Codable {
     case pinkNoiseShush = "pink_noise_shush"
+    case pinkNoise = "pink_noise"
     case noSound = "no_sound"
     
     var displayName: String {
         switch self {
         case .pinkNoiseShush:
             return "PINK NOISE + SHUSH"
+        case .pinkNoise:
+            return "PINK NOISE"
         case .noSound:
             return "NO SOUND"
         }
@@ -17,6 +20,8 @@ enum AudioOption: String, CaseIterable, Codable {
         switch self {
         case .pinkNoiseShush:
             return "sound_pink_noise_shush"
+        case .pinkNoise:
+            return "sound_pink_noise"
         case .noSound:
             return nil
         }

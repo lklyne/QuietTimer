@@ -109,6 +109,13 @@ struct TimerView: View {
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
             syncTimerFromBackground()
         }
+        .onChange(of: timerStorage.selectedAudioOption) { _ in
+            // React to audio setting changes while timer is running
+            if isRunning {
+                stopAudio()
+                startAudio()
+            }
+        }
     }
     
     private func toggleTimer() {
